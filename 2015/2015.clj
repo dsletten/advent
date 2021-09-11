@@ -83,6 +83,3 @@
   (is (== (enter-basement ")") 1))
   (is (== (enter-basement "()())") 5))
   (is (not (enter-basement "()"))))
-
-
-

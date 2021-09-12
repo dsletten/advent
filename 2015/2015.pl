@@ -1,4 +1,4 @@
-#!/opt/local/bin/swipl -q -t main -f
+#!/usr/bin/swipl -q -t main -f
 %%
 %   -*- Mode: Prolog -*-
 %   Name:               2015.pl

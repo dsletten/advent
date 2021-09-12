@@ -16,9 +16,11 @@
 ;;;;
 ;;;;
 (load "/home/slytobias/lisp/packages/lang.lisp")
+(load "/home/slytobias/lisp/packages/strings.lisp")
+(load "/home/slytobias/lisp/packages/io.lisp")
 (load "/home/slytobias/lisp/packages/test.lisp")
 
-(defpackage :2015 (:use :common-lisp :lang :test))
+(defpackage :2015 (:use :common-lisp :lang :strings :io :test))
 
 (in-package :2015)
 
@@ -91,3 +93,41 @@
    (= (enter-basement ")") 1)
    (= (enter-basement "()())") 5)
    (not (enter-basement "()"))))
+
+;;;
+;;;    Day 2
+;;;    
+(defun compute-wrap (length width height)
+  (destructuring-bind (a b c) (sort (list length width height) #'<)
+    (let* ((ab (* a b))
+           (ac (* a c))
+           (bc (* b c))
+           (slack ab))
+      (+ (* 2 ab) (* 2 ac) (* 2 bc) slack))))
+
+(deftest test-compute-wrap ()
+  (check
+   (= (compute-wrap 2 3 4) 58)
+   (= (compute-wrap 1 1 10) 43)))
+
+(defun parse-dimensions (dimensions)
+  (mapcar #'read-num (split dimensions #\x)))
+
+(defun calculate-total-wrap (file)
+  (loop for package in (read-file file)
+        summing (apply #'compute-wrap (parse-dimensions package))))
+
+(defun compute-ribbon (length width height)
+  (destructuring-bind (a b c) (sort (list length width height) #'<)
+    (let ((ribbon (+ (* 2 a) (* 2 b)))
+          (bow (* a b c)))
+      (+ ribbon bow))))
+
+(deftest test-compute-ribbon ()
+  (check
+   (= (compute-ribbon 2 3 4) 34)
+   (= (compute-ribbon 1 1 10) 14)))
+
+(defun calculate-total-ribbon (file)
+  (loop for package in (read-file file)
+        summing (apply #'compute-ribbon (parse-dimensions package))))

@@ -18,6 +18,7 @@
 (ns two-thousand-fifteen
   (:use clojure.test
         [clojure.pprint :only (cl-format)])
+  (:require [clojure.string :as string])
   (:import))
 
 ;;;
@@ -83,3 +84,37 @@
   (is (== (enter-basement ")") 1))
   (is (== (enter-basement "()())") 5))
   (is (not (enter-basement "()"))))
+
+;;;
+;;;    Day 2
+;;;    
+(defn compute-wrap [length width height]
+  (let [[a b c] (sort [length width height])
+        ab (* a b)
+        ac (* a c)
+        bc (* b c)
+        slack ab]
+    (+ (* 2 ab) (* 2 ac) (* 2 bc) slack)))
+
+(deftest test-compute-wrap ()
+  (is (== (compute-wrap 2 3 4) 58))
+  (is (== (compute-wrap 1 1 10) 43)))
+
+(defn parse-dimensions [dimensions]
+  (map read-string (string/split dimensions #"x")))
+
+(defn calculate-total-wrap [file]
+  (reduce + (map #(apply compute-wrap %) (map parse-dimensions (string/split (slurp file) #"\n")))) )
+
+(defn compute-ribbon [length width height]
+  (let [[a b c] (sort [length width height])
+        ribbon (+ (* 2 a) (* 2 b))
+        bow (* a b c)]
+    (+ ribbon bow)))
+
+(deftest test-compute-ribbon ()
+  (is (== (compute-ribbon 2 3 4) 34))
+  (is (== (compute-ribbon 1 1 10) 14)))
+
+(defn calculate-total-ribbon [file]
+  (reduce + (map #(apply compute-ribbon %) (map parse-dimensions (string/split (slurp file) #"\n")))) )

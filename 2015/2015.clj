@@ -103,8 +103,20 @@
 (defn parse-dimensions [dimensions]
   (map read-string (string/split dimensions #"x")))
 
+;;;
+;;;    Don't `map` twice!
+;;;    
+;; (defn calculate-total-wrap [file]
+;;   (reduce + (map #(apply compute-wrap %) (map parse-dimensions (string/split (slurp file) #"\n")))) )
+
 (defn calculate-total-wrap [file]
-  (reduce + (map #(apply compute-wrap %) (map parse-dimensions (string/split (slurp file) #"\n")))) )
+  (reduce + (map #(apply compute-wrap (parse-dimensions %)) (string/split (slurp file) #"\n"))))
+
+(defn calculate-total-quantity [file compute-quantity]
+  (reduce + (map (comp (partial apply compute-quantity) parse-dimensions) (string/split (slurp file) #"\n"))))
+
+(defn calculate-total-wrap [file]
+  (calculate-total-quantity file compute-wrap))
 
 (defn compute-ribbon [length width height]
   (let [[a b c] (sort [length width height])
@@ -116,5 +128,14 @@
   (is (== (compute-ribbon 2 3 4) 34))
   (is (== (compute-ribbon 1 1 10) 14)))
 
+;;;
+;;;    Don't `map` twice!
+;;;    
+;; (defn calculate-total-ribbon [file]
+;;   (reduce + (map #(apply compute-ribbon %) (map parse-dimensions (string/split (slurp file) #"\n")))) )
+
 (defn calculate-total-ribbon [file]
-  (reduce + (map #(apply compute-ribbon %) (map parse-dimensions (string/split (slurp file) #"\n")))) )
+  (reduce + (map #(apply compute-ribbon (parse-dimensions %)) (string/split (slurp file) #"\n"))))
+
+(defn calculate-total-ribbon [file]
+  (calculate-total-quantity file compute-ribbon))

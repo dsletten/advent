@@ -111,11 +111,29 @@
    (= (compute-wrap 1 1 10) 43)))
 
 (defun parse-dimensions (dimensions)
+  "Convert serialized dimension into list of dimensions: '2x3x4' => (2 3 4)"
   (mapcar #'read-num (split dimensions #\x)))
 
+(deftest test-parse-dimensions ()
+  (check
+   (equal (parse-dimensions "29x13x26") '(29 13 26))
+   (equal (parse-dimensions "11x11x14") '(11 11 14))
+   (equal (parse-dimensions "27x2x5") '(27 2 5))))
+
+;; (defun calculate-total-wrap (file)
+;;   (loop for package in (read-file file)
+;;         summing (apply #'compute-wrap (parse-dimensions package))))
+
+;; (defun calculate-total-quantity (file compute-quantity)
+;;   (reduce #'+ (mapcar #'(lambda (package)
+;;                           (apply compute-quantity (parse-dimensions package)))
+;;                       (read-file file))))
+
+(defun calculate-total-quantity (file compute-quantity)
+  (reduce #'+ (mapcar (compose (partial #'apply compute-quantity) #'parse-dimensions) (read-file file))))
+
 (defun calculate-total-wrap (file)
-  (loop for package in (read-file file)
-        summing (apply #'compute-wrap (parse-dimensions package))))
+  (calculate-total-quantity file #'compute-wrap))
 
 (defun compute-ribbon (length width height)
   (destructuring-bind (a b c) (sort (list length width height) #'<)
@@ -128,6 +146,19 @@
    (= (compute-ribbon 2 3 4) 34)
    (= (compute-ribbon 1 1 10) 14)))
 
+;; (defun calculate-total-ribbon (file)
+;;   (loop for package in (read-file file)
+;;         summing (apply #'compute-ribbon (parse-dimensions package))))
+
+;; (defun calculate-total-ribbon (file)
+;;   (reduce #'+ (mapcar #'(lambda (package)
+;;                           (apply #'compute-ribbon (parse-dimensions package)))
+;;                       (read-file file))))
+
 (defun calculate-total-ribbon (file)
-  (loop for package in (read-file file)
-        summing (apply #'compute-ribbon (parse-dimensions package))))
+  (calculate-total-quantity file #'compute-ribbon))
+
+;; (calculate-total-wrap "/home/slytobias/lisp/books/Advent/advent/2015/foo.data") => 101
+;; (calculate-total-wrap "/home/slytobias/lisp/books/Advent/advent/2015/day2.data") => 1586300
+;; (calculate-total-ribbon "/home/slytobias/lisp/books/Advent/advent/2015/foo.data") => 48
+;; (calculate-total-ribbon "/home/slytobias/lisp/books/Advent/advent/2015/day2.data") => 3737498

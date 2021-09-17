@@ -24,8 +24,9 @@
 ;;;
 ;;;    Day 1
 ;;;
-(defn deliver-presents [s]
+(defn deliver-presents
   "Determine floor for Santa to deliver presents based on instructions `s`. `(` means up one floor. `)` means down one floor."
+  [s]
   (reduce (fn [floor ch]
             (case ch
               \( (inc floor)
@@ -33,8 +34,9 @@
           0
           s))
 
-(defn deliver-presents [s]
+(defn deliver-presents
   "Determine floor for Santa to deliver presents based on instructions `s`. `(` means up one floor. `)` means down one floor."
+  [s]
   (loop [i 0
          floor 0]
     (if (== i (count s))
@@ -58,8 +60,9 @@
 ;;;    At first, it seems more natural to treat the string as a sequence,
 ;;;    but there is some awkwardness.
 ;;;    
-(defn enter-basement [s]
+(defn enter-basement
   "Determine when (or whether) Santa enters the basement. 1-based index."
+  [s]
   (loop [ch (first s)
          s (rest s)
          floor (case ch \( 1 \) -1)
@@ -70,8 +73,9 @@
                   \( (recur (first s) (rest s) (inc floor) (inc index))
                   \) (recur (first s) (rest s) (dec floor) (inc index)))) ))
 
-(defn enter-basement [s]
+(defn enter-basement
   "Determine when (or whether) Santa enters the basement. 1-based index."
+  [s]
   (loop [i 0
          floor 0]
     (cond (== floor -1) i
@@ -139,3 +143,63 @@
 
 (defn calculate-total-ribbon [file]
   (calculate-total-quantity file compute-ribbon))
+
+;;;
+;;;    Day 3
+;;;    
+(defn visit-houses [s]
+  (loop [s s
+         x 0
+         y 0
+         visited {[x y] 1}]
+    (cond (empty? s) (count visited)
+          :else (let [ch (first s)
+                      x1 (case ch \< (dec x) \> (inc x) x)
+                      y1 (case ch \^ (inc y) \v (dec y) y)]
+                  (recur (rest s) x1 y1 (assoc visited [x1 y1] (inc (visited [x1 y1] 0)))) ))))
+
+(deftest test-visit-houses ()
+  (is (== (visit-houses ">") 2))
+  (is (== (visit-houses "^>v<") 4))
+  (is (== (visit-houses "^v^v^v^v^v") 2)))
+
+;(visit-houses (slurp "/home/slytobias/lisp/books/Advent/advent/2015/day3.data")) => 2081
+
+(defrecord Agent [x y])
+
+(defn location [agent]
+  [(:x agent) (:y agent)])
+
+(defn leave-present
+  "Leave a present at the agent's location"
+  [agent visited]
+  (let [loc (location agent)]
+    (assoc visited loc (inc (visited loc 0)))) )
+
+(defn update-location
+  "Update the agent's location in the given direction."
+  [agent direction]
+  (let [x (:x agent)
+        y (:y agent)
+        x1 (case direction \< (dec x) \> (inc x) x)
+        y1 (case direction  \^ (inc y) \v (dec y) y)]
+    (Agent. x1 y1)))
+
+(defn robo-visit [s]
+  (let [santa (Agent. 0 0)
+        robot (Agent. 0 0)
+        visited (leave-present robot (leave-present santa {}))]
+    (loop [q (conj (conj clojure.lang.PersistentQueue/EMPTY santa) robot)
+           s s
+           visited visited]
+      (cond (empty? s) (count visited)
+            :else (let [agent (update-location (peek q) (first s))
+                        new-q (pop q)]
+                    (recur (conj new-q agent) (rest s) (leave-present agent visited)))) )))
+
+(deftest test-robo-visit ()
+  (is (== (robo-visit "^v") 3))
+  (is (== (robo-visit "^>v<") 3))
+  (is (== (robo-visit "^v^v^v^v^v") 11)))
+   
+;; (robo-visit (slurp "/home/slytobias/lisp/books/Advent/advent/2015/day3.data")) => 2341

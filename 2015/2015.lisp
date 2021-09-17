@@ -18,6 +18,7 @@
 (load "/home/slytobias/lisp/packages/lang.lisp")
 (load "/home/slytobias/lisp/packages/strings.lisp")
 (load "/home/slytobias/lisp/packages/io.lisp")
+(load "/home/slytobias/lisp/packages/collections.lisp")
 (load "/home/slytobias/lisp/packages/test.lisp")
 
 (defpackage :2015 (:use :common-lisp :lang :strings :io :test))
@@ -162,3 +163,122 @@
 ;; (calculate-total-wrap "/home/slytobias/lisp/books/Advent/advent/2015/day2.data") => 1586300
 ;; (calculate-total-ribbon "/home/slytobias/lisp/books/Advent/advent/2015/foo.data") => 48
 ;; (calculate-total-ribbon "/home/slytobias/lisp/books/Advent/advent/2015/day2.data") => 3737498
+
+;;;
+;;;    Day 3
+;;;    
+(defun visit-houses (s)
+  (let ((visited (make-hash-table :test #'equal))
+        (x 0)
+        (y 0))
+    (loop for ch across s
+          do (incf (gethash (cons x y) visited 0))
+             (case ch
+               (#\^ (incf y))
+               (#\v (decf y))
+               (#\> (incf x))
+               (#\< (decf x))))
+    (incf (gethash (list x y) visited 0))
+    (hash-table-count visited)))
+
+(defun visit-houses (s)
+  (let ((visited (make-hash-table :test #'equal))
+        (stream (make-string-input-stream s)))
+    (labels ((visit (x y)
+               (incf (gethash (cons x y) visited 0))
+               (let ((ch (read-char stream nil nil)))
+                 (case ch
+                   (#\^ (visit x (1+ y)))
+                   (#\v (visit x (1- y)))
+                   (#\> (visit (1+ x) y))
+                   (#\< (visit (1- x) y))
+                   ((nil) (hash-table-count visited)))) ))
+      (visit 0 0))))
+
+(deftest test-visit-houses ()
+  (check
+   (= (visit-houses ">") 2)
+   (= (visit-houses "^>v<") 4)
+   (= (visit-houses "^v^v^v^v^v") 2)))
+
+;; (visit-houses (read-file-as-string "/home/slytobias/lisp/books/Advent/advent/2015/day3.data")) => 2081
+
+(defclass agent ()
+  ((x :initform 0)
+   (y :initform 0)))
+
+(defgeneric location (agent)
+  (:documentation "Return the location of AGENT"))
+(defmethod location ((a agent))
+  (with-slots (x y) a
+    (list x y)))
+(defmethod (setf location) (location (a agent))
+  (with-slots (x y) a
+    (destructuring-bind (new-x new-y) location
+      (setf x new-x
+            y new-y))))
+
+(defgeneric leave-present (agent visited)
+  (:documentation "Leave a present at the agent's location"))
+(defmethod leave-present ((a agent) visited)
+  (incf (gethash (location a) visited 0)))
+
+(defgeneric update-location (agent direction)
+  (:documentation "Update the agent's location in the given direction."))
+;; (defmethod update-location ((a agent) (direction character))
+;;   (with-slots (x y) a
+;;     (setf x (update-x x direction)
+;;           y (update-y y direction))))
+(defmethod update-location ((a agent) (direction character))
+  (with-slots (x y) a
+    (ecase direction
+      (#\^ (incf y))
+      (#\v (decf y))
+      (#\> (incf x))
+      (#\< (decf x)))) )
+
+(defun print-visits (visited)
+  (print ">>>")
+  (loop for k being the hash-keys in visited using (hash-value v)
+        do (print (list k v))))
+
+;; (defun update-x (x ch)
+;;   (case ch
+;;     (#\> (1+ x))
+;;     (#\< (1- x))
+;;     (otherwise x)))
+
+;; (defun update-y (y ch)
+;;   (case ch
+;;     (#\^ (1+ y))
+;;     (#\v (1- y))
+;;     (otherwise y)))
+
+(defun robo-visit (s)
+  (let ((visited (make-hash-table :test #'equal))
+        (stream (make-string-input-stream s)))
+    (labels ((visit (q)
+               (let ((ch (read-char stream nil nil)))
+                 (cond ((null ch) (hash-table-count visited))
+                       (t (let ((agent (collections:dequeue q)))
+                            (update-location agent ch)
+                            (leave-present agent visited)
+                            (collections:enqueue q agent)
+                            (visit q)))) )))
+      (let ((queue (collections:make-linked-queue))
+            (santa (make-instance 'agent))
+            (robot (make-instance 'agent)))
+        (leave-present santa visited)
+        (leave-present robot visited)
+        (collections:enqueue queue santa)
+        (collections:enqueue queue robot)
+        (visit queue)))) )
+
+(deftest test-robo-visit ()
+  (check
+   (= (robo-visit "^v") 3)
+   (= (robo-visit "^>v<") 3)
+   (= (robo-visit "^v^v^v^v^v") 11)))
+   
+;; (robo-visit (read-file-as-string "/home/slytobias/lisp/books/Advent/advent/2015/day3.data")) => 2341
+        

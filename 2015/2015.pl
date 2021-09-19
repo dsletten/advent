@@ -123,3 +123,73 @@ compute_all_ribbons([D|Ds], S) :-
     compute_all_ribbons(Ds, S1),
     S is S1 + R.
 
+%%%
+%%%    Day 3
+%%%    Probably not the right way to do this...
+%%%    Dynamically uses KB to record visited locations.
+%%%    Should use SWIPL dictionary instead??
+%%%
+:- dynamic visited/3.
+
+update_location('^', X, Y, X, Y1) :-
+    Y1 is Y + 1.
+update_location('v', X, Y, X, Y1) :-
+    Y1 is Y - 1.
+update_location('>', X, Y, X1, Y) :-
+    X1 is X + 1.
+update_location('<', X, Y, X1, Y) :-
+    X1 is X - 1.
+
+leave_present(X, Y) :-
+    visited(X, Y, C), !,
+    retract(visited(X, Y, C)),
+    C1 is C + 1,
+    assertz(visited(X, Y, C1)).
+leave_present(X, Y) :-
+    \+ visited(X, Y, _),
+    assertz(visited(X, Y, 1)).
+
+%%%
+%%%    Nonsense!!!
+%%%    
+%% visit_houses(Directions, Count) :-
+%% %    retract(visited(_, _, _)),
+%%     retractall(visited(_, _, _)),
+%%     leave_present(0, 0),
+%%     visit_houses(Directions, Count, 1, 0, 0).
+%% visit_houses([], Count, Count, _, _) :- !.
+%% visit_houses([D|Ds], Count, C, X, Y) :-
+%%     update_location(D, X, Y, X1, Y1),
+%%     leave_present(X1, Y1),
+%%     C1 is C + 1,
+%%     visit_houses(Ds, Count, C1, X1, Y1).
+
+%% visit_houses(Directions, Count) :-
+%% %    retract(visited(_, _, _)),
+%%     retractall(visited(_, _, _)),
+%%     leave_present(0, 0),
+%%     visit_houses(Directions, Count, 0, 0).
+%% visit_houses([], Count, _, _) :-
+%%     findall(C, visited(_, _, C), L),
+%%     length(L, Count).
+%% visit_houses([D|Ds], Count, X, Y) :-
+%%     update_location(D, X, Y, X1, Y1),
+%%     leave_present(X1, Y1),
+%%     visit_houses(Ds, Count, X1, Y1).
+
+visit_houses(Directions, Count) :-
+%    retract(visited(_, _, _)),
+    retractall(visited(_, _, _)),
+    visit_houses(Directions, Count, 0, 0).
+visit_houses([], Count, X, Y) :-
+    leave_present(X, Y),
+    findall(C, visited(_, _, C), L),
+    length(L, Count).
+visit_houses([D|Ds], Count, X, Y) :-
+    leave_present(X, Y),
+    update_location(D, X, Y, X1, Y1),
+    visit_houses(Ds, Count, X1, Y1).
+
+%% io:read_chars('day3.data', L), visit_houses(L, C).
+%% L = [^, >, <, ^, >, >, >, ^, <|...],
+%% C = 2081 

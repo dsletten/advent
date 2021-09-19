@@ -158,6 +158,35 @@
                       y1 (case ch \^ (inc y) \v (dec y) y)]
                   (recur (rest s) x1 y1 (assoc visited [x1 y1] (inc (visited [x1 y1] 0)))) ))))
 
+(defn visit-houses [s]
+  (let [leave-present (fn [visited x y]
+                        (assoc visited [x y] (inc (visited [x y] 0))))
+        update-location (fn [x y ch]
+                          [(case ch \< (dec x) \> (inc x) x)
+                           (case ch \^ (inc y) \v (dec y) y)])]
+    (loop [s s
+           x 0
+           y 0
+           visited {}]
+      (let [visited (leave-present visited x y)]
+        (cond (empty? s) (count visited)
+              :else (let [[x1 y1] (update-location x y (first s))]
+                      (recur (rest s) x1 y1 visited)))) )))
+
+(defn visit-houses [s]
+  (letfn [(leave-present [visited x y]
+            (let [current (visited [x y] 0)]
+              (assoc visited [x y] (inc current))))
+          (update-location [x y ch]
+            [(case ch \< (dec x) \> (inc x) x)
+             (case ch \^ (inc y) \v (dec y) y)])
+          (visit [s x y visited]
+            (let [new-visited (leave-present visited x y)]
+              (cond (empty? s) (count new-visited)
+                    :else (let [[x1 y1] (update-location x y (first s))]
+                            (recur (rest s) x1 y1 new-visited)))) )]
+    (visit s 0 0 {})))
+
 (deftest test-visit-houses ()
   (is (== (visit-houses ">") 2))
   (is (== (visit-houses "^>v<") 4))
@@ -166,6 +195,10 @@
 ;(visit-houses (slurp "/home/slytobias/lisp/books/Advent/advent/2015/day3.data")) => 2081
 
 (defrecord Agent [x y])
+
+(defn make-agent
+  ([] (make-agent 0 0))
+  ([x y] (Agent. x y)))
 
 (defn location [agent]
   [(:x agent) (:y agent)])
@@ -183,19 +216,41 @@
         y (:y agent)
         x1 (case direction \< (dec x) \> (inc x) x)
         y1 (case direction  \^ (inc y) \v (dec y) y)]
-    (Agent. x1 y1)))
+    (make-agent x1 y1)))
+
+(def update-map {\< (fn [[x y]] [(dec x) y])
+                 \> (fn [[x y]] [(inc x) y])
+                 \^ (fn [[x y]] [x (inc y)])
+                 \v (fn [[x y]] [x (dec y)])})
+(defn update-location
+  "Update the agent's location in the given direction."
+  [agent direction]
+  (let [[x1 y1] ((update-map direction) (location agent))]
+    (make-agent x1 y1)))
+
+;; (defn robo-visit [s]
+;;   (let [santa (make-agent)
+;;         robot (make-agent)
+;;         visited (leave-present robot (leave-present santa {}))]
+;;     (loop [q (conj (conj clojure.lang.PersistentQueue/EMPTY santa) robot)
+;;            s s
+;;            visited visited]
+;;       (cond (empty? s) (count visited)
+;;             :else (let [agent (update-location (peek q) (first s))
+;;                         new-q (pop q)]
+;;                     (recur (conj new-q agent) (rest s) (leave-present agent visited)))) )))
 
 (defn robo-visit [s]
-  (let [santa (Agent. 0 0)
-        robot (Agent. 0 0)
-        visited (leave-present robot (leave-present santa {}))]
-    (loop [q (conj (conj clojure.lang.PersistentQueue/EMPTY santa) robot)
-           s s
-           visited visited]
-      (cond (empty? s) (count visited)
-            :else (let [agent (update-location (peek q) (first s))
-                        new-q (pop q)]
-                    (recur (conj new-q agent) (rest s) (leave-present agent visited)))) )))
+  (let [santa (make-agent)
+        robot (make-agent)
+        visited (leave-present robot (leave-present santa {}))
+        team (conj (conj clojure.lang.PersistentQueue/EMPTY santa) robot)]
+    (letfn [(visit [s team visited]
+              (cond (empty? s) (count visited)
+                    :else (let [agent (update-location (peek team) (first s))
+                                new-team (pop team)]
+                            (recur (rest s) (conj new-team agent) (leave-present agent visited)))) )]
+      (visit s team visited))))
 
 (deftest test-robo-visit ()
   (is (== (robo-visit "^v") 3))

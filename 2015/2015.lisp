@@ -346,3 +346,33 @@
    
 ;; (robo-visit (read-file-as-string "/home/slytobias/lisp/books/Advent/advent/2015/day3.data")) => 2341
         
+;;;
+;;;    Day 4
+;;;    https://en.wikipedia.org/wiki/MD5
+;;;
+
+;;;
+;;;    Now we have to use SBCL...
+;;;    
+(ql:quickload "md5")
+
+(defun mine-advent-coin (prefix n)
+  (loop for i from 1
+        for seed = (format nil "~A~D" prefix i)
+        when (coin-found-p seed n)
+        do (return i)))
+
+(defun coin-found-p (seed n)
+  (let ((nybbles (loop for byte across (md5:md5sum-string seed)
+                       collect (truncate byte 16)
+                       collect (rem byte 16))))
+    (every #'zerop (take n nybbles))))
+
+(deftest test-mine-advent-coin ()
+  (check
+   (= (mine-advent-coin "abcdef" 5) 609043)
+   (= (mine-advent-coin "pqrstuv" 5) 1048970)))
+
+;; (mine-advent-coin "ckczppom" 5) => 117946
+;; (mine-advent-coin "ckczppom" 6) => 3938038
+;; (mine-advent-coin "ckczppom" 7) => 257209165

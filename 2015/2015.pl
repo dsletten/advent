@@ -193,3 +193,60 @@ visit_houses([D|Ds], Count, X, Y) :-
 %% io:read_chars('day3.data', L), visit_houses(L, C).
 %% L = [^, >, <, ^, >, >, >, ^, <|...],
 %% C = 2081 
+
+leave_present(agent(_, X, Y)) :-
+    leave_present(X, Y).
+
+update_location(agent(Name, X, Y), Dir, agent(Name, X1, Y1)) :-
+    update_location(Dir, X, Y, X1, Y1).
+
+robo_visit(Directions, Count) :-
+    retractall(visited(_, _, _)),
+    Santa = agent(santa, 0, 0),
+    Robot = agent(robot, 0, 0),
+    leave_present(Santa),
+    leave_present(Robot),
+    Team = [Santa, Robot],
+    robo_visit(Directions, Team, Count).
+robo_visit([], _, Count) :-
+    findall(C, visited(_, _, C), L),
+    length(L, Count).
+robo_visit([D|Ds], [A|As], Count) :-
+    update_location(A, D, A1),
+    leave_present(A1),
+    append(As, [A1], Team),
+    robo_visit(Ds, Team, Count).
+    
+%% io:read_chars('day3.data', L), robo_visit(L, C).
+%% L = [^, >, <, ^, >, >, >, ^, <|...],
+%% C = 2341 
+
+%%%
+%%%    Day 4
+%%%    
+:- use_module(library(md5)).
+
+mine_advent_coin(Prefix, N, Coin) :-
+    mine_advent_coin(Prefix, N, 1, Coin).
+mine_advent_coin(Prefix, N, I, I) :-
+    atom_concat(Prefix, I, Seed),
+    coin_found(Seed, N).
+mine_advent_coin(Prefix, N, I, Coin) :-
+    I1 is I + 1,
+    mine_advent_coin(Prefix, N, I1, Coin).
+
+coin_found(Seed, N) :-
+    md5_hash(Seed, M, []),
+    atom_chars(M, Nybbles),
+    first_n_zeroes(Nybbles, N).
+
+first_n_zeroes(_, 0).
+first_n_zeroes(['0'|As], N) :-
+    N1 is N - 1,
+    first_n_zeroes(As, N1).
+
+%% advent_2015: 106 ?- mine_advent_coin("ckczppom", 5, I).
+%% I = 117946
+
+%% advent_2015: 107 ?- mine_advent_coin("ckczppom", 6, I).
+%% I = 3938038 

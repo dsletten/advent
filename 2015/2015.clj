@@ -19,7 +19,7 @@
   (:use clojure.test
         [clojure.pprint :only (cl-format)])
   (:require [clojure.string :as string])
-  (:import))
+  (:import [java.security MessageDigest]))
 
 ;;;
 ;;;    Day 1
@@ -258,3 +258,29 @@
   (is (== (robo-visit "^v^v^v^v^v") 11)))
    
 ;; (robo-visit (slurp "/home/slytobias/lisp/books/Advent/advent/2015/day3.data")) => 2341
+
+;;;
+;;;    Inspired by:
+;;;    https://gist.github.com/jizhang/4325757
+;;;    Aleksander Madland Stapnes
+(defn coin-found? [^String seed n]
+  (let [nybbles (mapcat #(vector (quot % 16) (rem % 16))
+                        (map #(Byte/toUnsignedInt %) (vec (.digest (MessageDigest/getInstance "MD5") (.getBytes seed)))) )]
+    (every? zero? (take n nybbles))))
+
+(defn mine-advent-coin [^String prefix n]
+  (loop [i 1]
+    (let [seed (cl-format false "~A~D" prefix i)]
+      (if (coin-found? seed n)
+        i
+        (recur (inc i)))) ))
+
+;;;
+;;;    This is very slow! Need to figure out how to speed up...
+;;;    
+;; (deftest test-mine-advent-coin ()
+;;   (is (== (mine-advent-coin "abcdef" 5) 609043))
+;;   (is (== (mine-advent-coin "pqrstuv" 5) 1048970)))
+
+;; (mine-advent-coin "ckczppom" 5) => 117946
+;; (mine-advent-coin "ckczppom" 6) => 3938038

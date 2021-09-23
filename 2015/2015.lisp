@@ -376,3 +376,109 @@
 ;; (mine-advent-coin "ckczppom" 5) => 117946
 ;; (mine-advent-coin "ckczppom" 6) => 3938038
 ;; (mine-advent-coin "ckczppom" 7) => 257209165
+
+;;;
+;;;    Day 5
+;;;    Assumes strings only contain lowercase alphabetic chars.
+;;;    Gotta find a way to condense this!
+;;;    
+(defun nice-string-p (s)
+  (let ((stream (make-string-input-stream s)))
+    (labels ((get-char ()
+               (read-char stream nil nil))
+             (nicep (vowels doublep)
+               (and (>= vowels 3) doublep))
+             (check-double (ch vowels doublep)
+               (let ((next (get-char)))
+                 (cond ((null next) (nicep vowels doublep))
+                       (t (check-nice next vowels (or (char= ch next) doublep)))) ))
+             (check-nice (ch vowels doublep)
+               (cond ((null ch) (nicep vowels doublep))
+                     (t (case ch
+                          (#\a (check-a (get-char) (1+ vowels) doublep))
+                          (#\c (check-c (get-char) vowels doublep))
+                          (#\p (check-p (get-char) vowels doublep))
+                          (#\x (check-x (get-char) vowels doublep))
+                          ((#\e #\i #\o #\u) (check-double ch (1+ vowels) doublep))
+                          (otherwise (check-double ch vowels doublep)))) ))
+             (check-a (ch vowels doublep)
+               (case ch
+                 (#\b nil)
+                 ((nil) (nicep vowels doublep))
+                 (#\a (check-a (get-char) (1+ vowels) t))
+                 (#\c (check-c (get-char) vowels doublep))
+                 (#\p (check-p (get-char) vowels doublep))
+                 (#\x (check-x (get-char) vowels doublep))
+                 ((#\e #\i #\o #\u) (check-double ch (1+ vowels) doublep))
+                 (otherwise (check-double ch vowels doublep))))
+             (check-c (ch vowels doublep)
+               (case ch
+                 (#\d nil)
+                 ((nil) (nicep vowels doublep))
+                 (#\c (check-c (get-char) vowels t))
+                 (#\a (check-a (get-char) (1+ vowels) doublep))
+                 (#\p (check-p (get-char) vowels doublep))
+                 (#\x (check-x (get-char) vowels doublep))
+                 ((#\e #\i #\o #\u) (check-double ch (1+ vowels) doublep))
+                 (otherwise (check-double ch vowels doublep))))
+             (check-p (ch vowels doublep)
+               (case ch
+                 (#\q nil)
+                 ((nil) (nicep vowels doublep))
+                 (#\p (check-p (get-char) vowels t))
+                 (#\a (check-a (get-char) (1+ vowels) doublep))
+                 (#\c (check-c (get-char) vowels doublep))
+                 (#\x (check-x (get-char) vowels doublep))
+                 ((#\e #\i #\o #\u) (check-double ch (1+ vowels) doublep))
+                 (otherwise (check-double ch vowels doublep))))
+             (check-x (ch vowels doublep)
+               (case ch
+                 (#\y nil)
+                 ((nil) (nicep vowels doublep))
+                 (#\x (check-x (get-char) vowels t))
+                 (#\a (check-a (get-char) (1+ vowels) doublep))
+                 (#\c (check-c (get-char) vowels doublep))
+                 (#\p (check-p (get-char) vowels doublep))
+                 ((#\e #\i #\o #\u) (check-double ch (1+ vowels) doublep))
+                 (otherwise (check-double ch vowels doublep)))) )
+      (check-nice (get-char) 0 nil))))
+
+(deftest test-nice-string-p ()
+  (check
+   (nice-string-p "ugknbfddgicrmopn")
+   (nice-string-p "aaa")
+   (not (nice-string-p "jchzalrnumimnmhp"))
+   (not (nice-string-p "haegwjzuvuyypxyu"))
+   (not (nice-string-p "dvszwmarrgswjxmb"))))
+
+;; (count t (mapcar #'nice-string-p (read-file "/home/slytobias/lisp/books/Advent/advent/2015/day5.data"))) => 236
+;; (length (remove nil (mapcar #'nice-string-p (read-file "/home/slytobias/lisp/books/Advent/advent/2015/day5.data")))) => 236
+
+;;;
+;;;    Initially messed up the termination tests here! Clojure version with regexes is more declarative.
+;;;    
+(defun nice-string-p* (s)
+  (let* ((length (length s))
+         (length3 (- length 3))
+         (length4 (- length 4)))
+    (labels ((rule1 (i)
+               (cond ((> i length4) nil)
+                     ((search s s :start1 i :end1 (+ i 2) :start2 (+ i 2)))
+                     (t (rule1 (1+ i)))) )
+             (rule2 (i)
+               (cond ((> i length3) nil)
+                     ((char= (char s i) (char s (+ i 2))) i)
+                     (t (rule2 (1+ i)))) ))
+      (and (rule1 0)
+           (rule2 0)))) )
+
+(deftest test-nice-string-p* ()
+  (check
+   (nice-string-p* "qjhvhtzxzqqjkmpb")
+   (nice-string-p* "xxyxx")
+   (nice-string-p* "qryjbohkprfazczc") ; Check index for Rule 1!
+   (not (nice-string-p* "uurcxstgmygtbstg"))
+   (not (nice-string-p* "ieodomkazucvgmuy"))
+   (not (nice-string-p* "suerykeptdsutidb")))) ; Check index for Rule 2!
+
+;; (count-if #'numberp (mapcar #'nice-string-p* (read-file "/home/slytobias/lisp/books/Advent/advent/2015/day5.data"))) => 51

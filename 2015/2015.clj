@@ -260,6 +260,9 @@
 ;; (robo-visit (slurp "/home/slytobias/lisp/books/Advent/advent/2015/day3.data")) => 2341
 
 ;;;
+;;;    Day 4
+;;;    
+;;;
 ;;;    Inspired by:
 ;;;    https://gist.github.com/jizhang/4325757
 ;;;    Aleksander Madland Stapnes
@@ -284,3 +287,90 @@
 
 ;; (mine-advent-coin "ckczppom" 5) => 117946
 ;; (mine-advent-coin "ckczppom" 6) => 3938038
+
+;;;
+;;;    Day 5
+;;;    
+(defn nice-string? [s]
+  (letfn [(nice? [vowels double?]
+            (and (>= vowels 3) double?))
+          (check-double [ch s vowels double?]
+            (let [next-ch (first s)]
+              (cond (nil? next-ch) (nice? vowels double?)
+                    :else (check-nice next-ch (rest s) vowels (or (= ch next-ch) double?)))) )
+          (check-nice [ch s vowels double?]
+            (cond (nil? ch) (nice? vowels double?)
+                  :else (case ch
+                          \a (check-a (first s) (rest s) (inc vowels) double?)
+                          \c (check-c (first s) (rest s) vowels double?)
+                          \p (check-p (first s) (rest s) vowels double?)
+                          \x (check-x (first s) (rest s) vowels double?)
+                          (\e \i \o \u) (check-double ch s (inc vowels) double?)
+                          (check-double ch s vowels double?))))
+          (check-a [ch s vowels double?]
+            (case ch
+              \b false
+              nil (nice? vowels double?)
+              \a (check-a (first s) (rest s) (inc vowels) true)
+              \c (check-c (first s) (rest s) vowels double?)
+              \p (check-p (first s) (rest s) vowels double?)
+              \x (check-x (first s) (rest s) vowels double?)
+              (\e \i \o \u) (check-double ch s (inc vowels) double?)
+              (check-double ch s vowels double?)))
+          (check-c [ch s vowels double?]
+            (case ch
+              \d false
+              nil (nice? vowels double?)
+              \c (check-c (first s) (rest s) vowels true)
+              \a (check-a (first s) (rest s) (inc vowels) double?)
+              \p (check-p (first s) (rest s) vowels double?)
+              \x (check-x (first s) (rest s) vowels double?)
+              (\e \i \o \u) (check-double ch s (inc vowels) double?)
+              (check-double ch s vowels double?)))
+          (check-p [ch s vowels double?]
+            (case ch
+              \q false
+              nil (nice? vowels double?)
+              \p (check-p (first s) (rest s) vowels true)
+              \a (check-a (first s) (rest s) (inc vowels) double?)
+              \c (check-c (first s) (rest s) vowels double?)
+              \x (check-x (first s) (rest s) vowels double?)
+              (\e \i \o \u) (check-double ch s (inc vowels) double?)
+              (check-double ch s vowels double?)))
+          (check-x [ch s vowels double?]
+            (case ch
+              \y false
+              nil (nice? vowels double?)
+              \x (check-x (first s) (rest s) vowels true)
+              \a (check-a (first s) (rest s) (inc vowels) double?)
+              \c (check-c (first s) (rest s) vowels double?)
+              \p (check-p (first s) (rest s) vowels double?)
+              (\e \i \o \u) (check-double ch s (inc vowels) double?)
+              (check-double ch s vowels double?)))]
+    (check-nice (first s) (rest s) 0 false)))
+
+(deftest test-nice-string? ()
+  (is (nice-string? "ugknbfddgicrmopn"))
+  (is (nice-string? "aaa"))
+  (is (not (nice-string? "jchzalrnumimnmhp")))
+  (is (not (nice-string? "haegwjzuvuyypxyu")))
+  (is (not (nice-string? "dvszwmarrgswjxmb"))))
+
+;; (count (remove false? (map nice-string? (string/split (slurp "day5.data") #"\n")))) => 236
+
+(defn nice-string?* [s]
+  (let [rule1 (re-find #"(.)(.).*\1\2" s)
+        rule2 (re-find #"(.).\1" s)]
+    (if (and rule1 rule2)
+      true
+      false)))
+
+(deftest test-nice-string?* ()
+  (is (nice-string?* "qjhvhtzxzqqjkmpb"))
+  (is (nice-string?* "xxyxx"))
+  (is (nice-string?* "qryjbohkprfazczc")) ; Check index for Rule 1!
+  (is (not (nice-string?* "uurcxstgmygtbstg")))
+  (is (not (nice-string?* "ieodomkazucvgmuy")))
+  (is (not (nice-string?* "suerykeptdsutidb")))) ; Check index for Rule 2!
+
+;; (count (remove false? (map nice-string?* (string/split (slurp "day5.data") #"\n")))) => 51

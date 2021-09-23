@@ -250,3 +250,179 @@ first_n_zeroes(['0'|As], N) :-
 
 %% advent_2015: 107 ?- mine_advent_coin("ckczppom", 6, I).
 %% I = 3938038 
+
+%%%
+%%%    Day 5
+%%%    
+nice1(S) :-
+    atom_chars(S, L),
+    check_nice(L, 0, false).
+
+nice(V, true) :-
+    V >= 3.
+
+vowel(a).
+vowel(e).
+vowel(i).
+vowel(o).
+vowel(u).
+
+check_nice([], V, D) :-
+    nice(V, D).
+check_nice([a|Cs], V, D) :-
+    !,
+    V1 is V + 1,
+    check_a(Cs, V1, D).
+check_nice([c|Cs], V, D) :-
+    check_c(Cs, V, D).
+check_nice([p|Cs], V, D) :-
+    check_p(Cs, V, D).
+check_nice([x|Cs], V, D) :-
+    check_x(Cs, V, D).
+check_nice([C|Cs], V, D) :-
+    vowel(C), !,
+    V1 is V + 1,
+    check_double_nice(C, Cs, V1, D).
+check_nice([C|Cs], V, D) :-
+    check_double_nice(C, Cs, V, D).
+
+check_double_nice(_, [], V, D) :-
+    check_nice([], V, D).
+check_double_nice(A, [A|Cs], V, _) :-
+    !,
+    check_nice([A|Cs], V, true).
+check_double_nice(_, [A|Cs], V, D) :-
+    check_nice([A|Cs], V, D).
+    
+check_a([], V, D) :-
+    nice(V, D).
+check_a([b|_], _, _) :- fail.
+check_a([a|Cs], V, _) :-
+    !,
+    V1 is V + 1,
+    check_a(Cs, V1, true).
+check_a([c|Cs], V, D) :-
+    check_c(Cs, V, D).
+check_a([p|Cs], V, D) :-
+    check_p(Cs, V, D).
+check_a([x|Cs], V, D) :-
+    check_x(Cs, V, D).
+
+%%              (check-a (ch vowels doublep)
+%%                (case ch
+%%                  (#\b nil)
+%%                  ((nil) (nicep vowels doublep))
+%%                  (#\a (check-a (get-char) (1+ vowels) t))
+%%                  (#\c (check-c (get-char) vowels doublep))
+%%                  (#\p (check-p (get-char) vowels doublep))
+%%                  (#\x (check-x (get-char) vowels doublep))
+%%                  ((#\e #\i #\o #\u) (let ((next (get-char)))
+%%                                       (check-nice next (1+ vowels) (if (eq ch next) t doublep))))
+%%                  (otherwise (let ((next (get-char)))
+%%                               (check-nice next vowels (if (eq ch next) t doublep)))) ))
+%%              (check-c (ch vowels doublep)
+%%                (case ch
+%%                  (#\d nil)
+%%                  ((nil) (nicep vowels doublep))
+%%                  (#\c (check-c (get-char) vowels t))
+%%                  (#\a (check-a (get-char) (1+ vowels) doublep))
+%%                  (#\p (check-p (get-char) vowels doublep))
+%%                  (#\x (check-x (get-char) vowels doublep))
+%%                  ((#\e #\i #\o #\u) (let ((next (get-char)))
+%%                                       (check-nice next (1+ vowels) (if (eq ch next) t doublep))))
+%%                  (otherwise (let ((next (get-char)))
+%%                               (check-nice next vowels (if (eq ch next) t doublep)))) ))
+%%              (check-p (ch vowels doublep)
+%%                (case ch
+%%                  (#\q nil)
+%%                  ((nil) (nicep vowels doublep))
+%%                  (#\p (check-p (get-char) vowels t))
+%%                  (#\a (check-a (get-char) (1+ vowels) doublep))
+%%                  (#\c (check-c (get-char) vowels doublep))
+%%                  (#\x (check-x (get-char) vowels doublep))
+%%                  ((#\e #\i #\o #\u) (let ((next (get-char)))
+%%                                       (check-nice next (1+ vowels) (if (eq ch next) t doublep))))
+%%                  (otherwise (let ((next (get-char)))
+%%                               (check-nice next vowels (if (eq ch next) t doublep)))) ))
+%%              (check-x (ch vowels doublep)
+%%                (case ch
+%%                  (#\y nil)
+%%                  ((nil) (nicep vowels doublep))
+%%                  (#\x (check-x (get-char) vowels t))
+%%                  (#\a (check-a (get-char) (1+ vowels) doublep))
+%%                  (#\c (check-c (get-char) vowels doublep))
+%%                  (#\p (check-p (get-char) vowels doublep))
+%%                  ((#\e #\i #\o #\u) (let ((next (get-char)))
+%%                                       (check-nice next (1+ vowels) (if (eq ch next) t doublep))))
+%%                  (otherwise (let ((next (get-char)))
+%%                               (check-nice next vowels (if (eq ch next) t doublep)))) )))
+%%       (check-nice (get-char) 0 nil))))
+
+%% (deftest test-nice-string-p ()
+%%   (check
+%%    (nice-string-p "ugknbfddgicrmopn")
+%%    (nice-string-p "aaa")
+%%    (not (nice-string-p "jchzalrnumimnmhp"))
+%%    (not (nice-string-p "haegwjzuvuyypxyu"))
+%%    (not (nice-string-p "dvszwmarrgswjxmb"))))
+
+
+
+
+
+
+
+check_nice2(File, Count) :-
+    io:read_file(File, Lines),
+    count_nice2(Lines, Count, 0).
+
+count_nice2([], Count, Count).
+count_nice2([L|Ls], Count, C) :-
+    nice2(L),
+    C1 is C + 1,
+    count_nice2(Ls, Count, C1).
+count_nice2([_|Ls], Count, C) :-
+    count_nice2(Ls, Count, C).
+
+nice2(S) :-
+    atom_chars(S, [A, B|Cs]),
+    rule1(A, B, Cs),
+    rule2(A, B, Cs).
+
+rule1(A, B, Cs) :-
+    search(A, B, Cs).
+rule1(_, A, [B|Cs]) :-
+    rule1(A, B, Cs).
+search(A, B, [A, B|_]).
+search(A, B, [_|Cs]) :-
+    search(A, B, Cs).
+
+rule2(A, _, [A|_]).
+rule2(_, A, [B|Cs]) :-
+    rule2(A, B, Cs).
+
+%% advent_2015: 20 ?- nice2(qjhvhtzxzqqjkmpb).
+%% true ;
+%% true ;
+%% false.
+
+%% advent_2015: 21 ?- nice2(xxyxx).
+%% true ;
+%% false.
+
+%% advent_2015: 22 ?- nice2(qryjbohkprfazczc).
+%% true ;
+%% true ;
+%% false.
+
+%% advent_2015: 23 ?- nice2(uurcxstgmygtbstg).
+%% false.
+
+%% advent_2015: 24 ?- nice2(ieodomkazucvgmuy).
+%% false.
+
+%% advent_2015: 25 ?- nice2(suerykeptdsutidb).
+%% false.
+
+%% advent_2015: 30 ?- check_nice2('day5.data', C).
+%% C = 51

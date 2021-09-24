@@ -253,7 +253,20 @@ first_n_zeroes(['0'|As], N) :-
 
 %%%
 %%%    Day 5
+%%%    So many cuts!!
 %%%    
+check_nice1(File, Count) :-
+    io:read_file(File, Lines),
+    count_nice1(Lines, Count, 0).
+
+count_nice1([], Count, Count).
+count_nice1([L|Ls], Count, C) :-
+    nice1(L),
+    C1 is C + 1,
+    count_nice1(Ls, Count, C1).
+count_nice1([_|Ls], Count, C) :-
+    count_nice1(Ls, Count, C).
+
 nice1(S) :-
     atom_chars(S, L),
     check_nice(L, 0, false).
@@ -274,11 +287,11 @@ check_nice([a|Cs], V, D) :-
     V1 is V + 1,
     check_a(Cs, V1, D).
 check_nice([c|Cs], V, D) :-
-    check_c(Cs, V, D).
+    !, check_c(Cs, V, D).
 check_nice([p|Cs], V, D) :-
-    check_p(Cs, V, D).
+    !, check_p(Cs, V, D).
 check_nice([x|Cs], V, D) :-
-    check_x(Cs, V, D).
+    !, check_x(Cs, V, D).
 check_nice([C|Cs], V, D) :-
     vowel(C), !,
     V1 is V + 1,
@@ -287,7 +300,7 @@ check_nice([C|Cs], V, D) :-
     check_double_nice(C, Cs, V, D).
 
 check_double_nice(_, [], V, D) :-
-    check_nice([], V, D).
+    nice(V, D).
 check_double_nice(A, [A|Cs], V, _) :-
     !,
     check_nice([A|Cs], V, true).
@@ -296,67 +309,83 @@ check_double_nice(_, [A|Cs], V, D) :-
     
 check_a([], V, D) :-
     nice(V, D).
-check_a([b|_], _, _) :- fail.
+check_a([b|_], _, _) :- !, fail.
 check_a([a|Cs], V, _) :-
     !,
     V1 is V + 1,
     check_a(Cs, V1, true).
 check_a([c|Cs], V, D) :-
-    check_c(Cs, V, D).
+    !, check_c(Cs, V, D).
 check_a([p|Cs], V, D) :-
-    check_p(Cs, V, D).
+    !, check_p(Cs, V, D).
 check_a([x|Cs], V, D) :-
-    check_x(Cs, V, D).
+    !, check_x(Cs, V, D).
+check_a([C|Cs], V, D) :-
+    vowel(C), !,
+    V1 is V + 1,
+    check_double_nice(C, Cs, V1, D).
+check_a([C|Cs], V, D) :-
+    check_double_nice(C, Cs, V, D).
 
-%%              (check-a (ch vowels doublep)
-%%                (case ch
-%%                  (#\b nil)
-%%                  ((nil) (nicep vowels doublep))
-%%                  (#\a (check-a (get-char) (1+ vowels) t))
-%%                  (#\c (check-c (get-char) vowels doublep))
-%%                  (#\p (check-p (get-char) vowels doublep))
-%%                  (#\x (check-x (get-char) vowels doublep))
-%%                  ((#\e #\i #\o #\u) (let ((next (get-char)))
-%%                                       (check-nice next (1+ vowels) (if (eq ch next) t doublep))))
-%%                  (otherwise (let ((next (get-char)))
-%%                               (check-nice next vowels (if (eq ch next) t doublep)))) ))
-%%              (check-c (ch vowels doublep)
-%%                (case ch
-%%                  (#\d nil)
-%%                  ((nil) (nicep vowels doublep))
-%%                  (#\c (check-c (get-char) vowels t))
-%%                  (#\a (check-a (get-char) (1+ vowels) doublep))
-%%                  (#\p (check-p (get-char) vowels doublep))
-%%                  (#\x (check-x (get-char) vowels doublep))
-%%                  ((#\e #\i #\o #\u) (let ((next (get-char)))
-%%                                       (check-nice next (1+ vowels) (if (eq ch next) t doublep))))
-%%                  (otherwise (let ((next (get-char)))
-%%                               (check-nice next vowels (if (eq ch next) t doublep)))) ))
-%%              (check-p (ch vowels doublep)
-%%                (case ch
-%%                  (#\q nil)
-%%                  ((nil) (nicep vowels doublep))
-%%                  (#\p (check-p (get-char) vowels t))
-%%                  (#\a (check-a (get-char) (1+ vowels) doublep))
-%%                  (#\c (check-c (get-char) vowels doublep))
-%%                  (#\x (check-x (get-char) vowels doublep))
-%%                  ((#\e #\i #\o #\u) (let ((next (get-char)))
-%%                                       (check-nice next (1+ vowels) (if (eq ch next) t doublep))))
-%%                  (otherwise (let ((next (get-char)))
-%%                               (check-nice next vowels (if (eq ch next) t doublep)))) ))
-%%              (check-x (ch vowels doublep)
-%%                (case ch
-%%                  (#\y nil)
-%%                  ((nil) (nicep vowels doublep))
-%%                  (#\x (check-x (get-char) vowels t))
-%%                  (#\a (check-a (get-char) (1+ vowels) doublep))
-%%                  (#\c (check-c (get-char) vowels doublep))
-%%                  (#\p (check-p (get-char) vowels doublep))
-%%                  ((#\e #\i #\o #\u) (let ((next (get-char)))
-%%                                       (check-nice next (1+ vowels) (if (eq ch next) t doublep))))
-%%                  (otherwise (let ((next (get-char)))
-%%                               (check-nice next vowels (if (eq ch next) t doublep)))) )))
-%%       (check-nice (get-char) 0 nil))))
+check_c([], V, D) :-
+    nice(V, D).
+check_c([d|_], _, _) :- !, fail.
+check_c([c|Cs], V, _) :-
+    !, check_c(Cs, V, true).
+check_c([a|Cs], V, D) :-
+    !,
+    V1 is V + 1,
+    check_a(Cs, V1, D).
+check_c([p|Cs], V, D) :-
+    !, check_p(Cs, V, D).
+check_c([x|Cs], V, D) :-
+    !, check_x(Cs, V, D).
+check_c([C|Cs], V, D) :-
+    vowel(C), !,
+    V1 is V + 1,
+    check_double_nice(C, Cs, V1, D).
+check_c([C|Cs], V, D) :-
+    check_double_nice(C, Cs, V, D).
+
+check_p([], V, D) :-
+    nice(V, D).
+check_p([q|_], _, _) :- !, fail.
+check_p([p|Cs], V, _) :-
+    !, check_p(Cs, V, true).
+check_p([a|Cs], V, D) :-
+    !,
+    V1 is V + 1,
+    check_a(Cs, V1, D).
+check_p([c|Cs], V, D) :-
+    !, check_c(Cs, V, D).
+check_p([x|Cs], V, D) :-
+    !, check_x(Cs, V, D).
+check_p([C|Cs], V, D) :-
+    vowel(C), !,
+    V1 is V + 1,
+    check_double_nice(C, Cs, V1, D).
+check_p([C|Cs], V, D) :-
+    check_double_nice(C, Cs, V, D).
+
+check_x([], V, D) :-
+    nice(V, D).
+check_x([y|_], _, _) :- !, fail.
+check_x([x|Cs], V, _) :-
+    !, check_x(Cs, V, true).
+check_x([a|Cs], V, D) :-
+    !,
+    V1 is V + 1,
+    check_a(Cs, V1, D).
+check_x([c|Cs], V, D) :-
+    !, check_c(Cs, V, D).
+check_x([p|Cs], V, D) :-
+    !, check_p(Cs, V, D).
+check_x([C|Cs], V, D) :-
+    vowel(C), !,
+    V1 is V + 1,
+    check_double_nice(C, Cs, V1, D).
+check_x([C|Cs], V, D) :-
+    check_double_nice(C, Cs, V, D).
 
 %% (deftest test-nice-string-p ()
 %%   (check

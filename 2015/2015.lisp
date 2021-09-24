@@ -381,7 +381,62 @@
 ;;;    Day 5
 ;;;    Assumes strings only contain lowercase alphabetic chars.
 ;;;    Gotta find a way to condense this!
+;;;
+;;;    This is marginally shorter, but it disrupts the symmetry...
 ;;;    
+;; (defun nice-string-p (s)
+;;   (let ((stream (make-string-input-stream s)))
+;;     (labels ((get-char ()
+;;                (read-char stream nil nil))
+;;              (nicep (vowels doublep)
+;;                (and (>= vowels 3) doublep))
+;;              (vowelp (ch)
+;;                (inq ch (#\a #\e #\i #\o #\u)))
+;;              (check-double (ch vowels doublep)
+;;                (let ((next (get-char)))
+;;                  (cond ((null next) (nicep vowels doublep))
+;;                        (t (check-nice next vowels (or (char= ch next) doublep)))) ))
+;;              (check-nice (ch vowels doublep)
+;;                (cond ((null ch) (nicep vowels doublep))
+;;                      (t (case ch
+;;                           (#\a (check-a (get-char) (1+ vowels) doublep))
+;;                           (#\c (check-c (get-char) vowels doublep))
+;;                           (#\p (check-p (get-char) vowels doublep))
+;;                           (#\x (check-x (get-char) vowels doublep))
+;;                           (otherwise (check-double ch (if (vowelp ch) (1+ vowels) vowels) doublep)))) ))
+;;              (check-a (ch vowels doublep)
+;;                (cond ((null ch) (nicep vowels doublep))
+;;                      (t (case ch
+;;                           (#\b nil)
+;;                           (#\a (check-a (get-char) (1+ vowels) t))
+;;                           ((#\c #\p #\x) (check-nice ch vowels doublep))
+;;                           (otherwise (check-double ch (if (vowelp ch) (1+ vowels) vowels) doublep)))) ))
+;;              (check-c (ch vowels doublep)
+;;                (cond ((null ch) (nicep vowels doublep))
+;;                      (t (case ch
+;;                           (#\d nil)
+;;                           (#\a (check-a (get-char) (1+ vowels) doublep))
+;;                           (#\c (check-c (get-char) vowels t))
+;;                           ((#\p #\x) (check-nice ch vowels doublep))
+;;                           (otherwise (check-double ch (if (vowelp ch) (1+ vowels) vowels) doublep)))) ))
+;;              (check-p (ch vowels doublep)
+;;                (cond ((null ch) (nicep vowels doublep))
+;;                      (t (case ch
+;;                           (#\q nil)
+;;                           (#\a (check-a (get-char) (1+ vowels) doublep))
+;;                           (#\p (check-p (get-char) vowels t))
+;;                           ((#\c #\x) (check-nice ch vowels doublep))
+;;                           (otherwise (check-double ch (if (vowelp ch) (1+ vowels) vowels) doublep)))) ))
+;;              (check-x (ch vowels doublep)
+;;                (cond ((null ch) (nicep vowels doublep))
+;;                      (t (case ch
+;;                           (#\y nil)
+;;                           (#\a (check-a (get-char) (1+ vowels) doublep))
+;;                           (#\x (check-x (get-char) vowels t))
+;;                           ((#\c #\p) (check-nice ch vowels doublep))
+;;                           (otherwise (check-double ch (if (vowelp ch) (1+ vowels) vowels) doublep)))) )))
+;;       (check-nice (get-char) 0 nil))))
+
 (defun nice-string-p (s)
   (let ((stream (make-string-input-stream s)))
     (labels ((get-char ()
@@ -390,6 +445,8 @@
                (and (>= vowels 3) doublep))
              (vowelp (ch)
                (inq ch (#\a #\e #\i #\o #\u)))
+             (check-vowel (ch vowels)
+               (if (vowelp ch) (1+ vowels) vowels))
              (check-double (ch vowels doublep)
                (let ((next (get-char)))
                  (cond ((null next) (nicep vowels doublep))
@@ -401,7 +458,7 @@
                           (#\c (check-c (get-char) vowels doublep))
                           (#\p (check-p (get-char) vowels doublep))
                           (#\x (check-x (get-char) vowels doublep))
-                          (otherwise (check-double ch (if (vowelp ch) (1+ vowels) vowels) doublep)))) ))
+                          (otherwise (check-double ch (check-vowel ch vowels) doublep)))) ))
              (check-a (ch vowels doublep)
                (cond ((null ch) (nicep vowels doublep))
                      (t (case ch
@@ -410,7 +467,7 @@
                           (#\c (check-c (get-char) vowels doublep))
                           (#\p (check-p (get-char) vowels doublep))
                           (#\x (check-x (get-char) vowels doublep))
-                          (otherwise (check-double ch (if (vowelp ch) (1+ vowels) vowels) doublep)))) ))
+                          (otherwise (check-double ch (check-vowel ch vowels) doublep)))) ))
              (check-c (ch vowels doublep)
                (cond ((null ch) (nicep vowels doublep))
                      (t (case ch
@@ -419,7 +476,7 @@
                           (#\c (check-c (get-char) vowels t))
                           (#\p (check-p (get-char) vowels doublep))
                           (#\x (check-x (get-char) vowels doublep))
-                          (otherwise (check-double ch (if (vowelp ch) (1+ vowels) vowels) doublep)))) ))
+                          (otherwise (check-double ch (check-vowel ch vowels) doublep)))) ))
              (check-p (ch vowels doublep)
                (cond ((null ch) (nicep vowels doublep))
                      (t (case ch
@@ -428,7 +485,7 @@
                           (#\c (check-c (get-char) vowels doublep))
                           (#\p (check-p (get-char) vowels t))
                           (#\x (check-x (get-char) vowels doublep))
-                          (otherwise (check-double ch (if (vowelp ch) (1+ vowels) vowels) doublep)))) ))
+                          (otherwise (check-double ch (check-vowel ch vowels) doublep)))) ))
              (check-x (ch vowels doublep)
                (cond ((null ch) (nicep vowels doublep))
                      (t (case ch
@@ -437,7 +494,7 @@
                           (#\c (check-c (get-char) vowels doublep))
                           (#\p (check-p (get-char) vowels doublep))
                           (#\x (check-x (get-char) vowels t))
-                          (otherwise (check-double ch (if (vowelp ch) (1+ vowels) vowels) doublep)))) )))
+                          (otherwise (check-double ch (check-vowel ch vowels) doublep)))) )))
       (check-nice (get-char) 0 nil))))
 
 (deftest test-nice-string-p ()

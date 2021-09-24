@@ -296,6 +296,8 @@
             (and (>= vowels 3) double?))
           (vowel? [ch]
             (contains? #{\a \e \i \o \u} ch))
+          (check-vowel [ch vowels]
+            (if (vowel? ch) (inc vowels) vowels))
           (check-double [ch s vowels double?]
             (let [next-ch (first s)]
               (cond (nil? next-ch) (nice? vowels double?)
@@ -307,7 +309,7 @@
                           \c (check-c (first s) (rest s) vowels double?)
                           \p (check-p (first s) (rest s) vowels double?)
                           \x (check-x (first s) (rest s) vowels double?)
-                          (check-double ch s (if (vowel? ch) (inc vowels) vowels) double?))))
+                          (check-double ch s (check-vowel ch vowels) double?))))
           (check-a [ch s vowels double?]
             (cond (nil? ch) (nice? vowels double?)
                   :else (case ch
@@ -316,7 +318,7 @@
                           \c (check-c (first s) (rest s) vowels double?)
                           \p (check-p (first s) (rest s) vowels double?)
                           \x (check-x (first s) (rest s) vowels double?)
-                          (check-double ch s (if (vowel? ch) (inc vowels) vowels) double?))))
+                          (check-double ch s (check-vowel ch vowels) double?))))
           (check-c [ch s vowels double?]
             (cond (nil? ch) (nice? vowels double?)
                   :else (case ch
@@ -325,7 +327,7 @@
                           \c (check-c (first s) (rest s) vowels true)
                           \p (check-p (first s) (rest s) vowels double?)
                           \x (check-x (first s) (rest s) vowels double?)
-                          (check-double ch s (if (vowel? ch) (inc vowels) vowels) double?))))
+                          (check-double ch s (check-vowel ch vowels) double?))))
           (check-p [ch s vowels double?]
             (cond (nil? ch) (nice? vowels double?)
                   :else (case ch
@@ -334,7 +336,7 @@
                           \c (check-c (first s) (rest s) vowels double?)
                           \p (check-p (first s) (rest s) vowels true)
                           \x (check-x (first s) (rest s) vowels double?)
-                          (check-double ch s (if (vowel? ch) (inc vowels) vowels) double?))))
+                          (check-double ch s (check-vowel ch vowels) double?))))
           (check-x [ch s vowels double?]
             (cond (nil? ch) (nice? vowels double?)
                   :else (case ch
@@ -343,7 +345,7 @@
                           \c (check-c (first s) (rest s) vowels double?)
                           \p (check-p (first s) (rest s) vowels double?)
                           \x (check-x (first s) (rest s) vowels true)
-                          (check-double ch s (if (vowel? ch) (inc vowels) vowels) double?)))) ]
+                          (check-double ch s (check-vowel ch vowels) double?)))) ]
     (check-nice (first s) (rest s) 0 false)))
 
 (deftest test-nice-string? ()

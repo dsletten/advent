@@ -293,20 +293,23 @@ check_nice([p|Cs], V, D) :-
 check_nice([x|Cs], V, D) :-
     !, check_x(Cs, V, D).
 check_nice([C|Cs], V, D) :-
-    vowel(C), !,
-    V1 is V + 1,
-    check_double_nice(C, Cs, V1, D).
-check_nice([C|Cs], V, D) :-
-    check_double_nice(C, Cs, V, D).
+    check_vowel(C, V, V1),
+    check_double(C, Cs, V1, D).
 
-check_double_nice(_, [], V, D) :-
+check_double(_, [], V, D) :-
     nice(V, D).
-check_double_nice(A, [A|Cs], V, _) :-
+check_double(A, [A|Cs], V, _) :-
     !,
     check_nice([A|Cs], V, true).
-check_double_nice(_, [A|Cs], V, D) :-
+check_double(_, [A|Cs], V, D) :-
     check_nice([A|Cs], V, D).
-    
+
+check_vowel(C, V, V1) :-
+    vowel(C),
+    V1 is V + 1.
+check_vowel(C, V, V) :-
+    \+ vowel(C).
+
 check_a([], V, D) :-
     nice(V, D).
 check_a([b|_], _, _) :- !, fail.
@@ -321,57 +324,46 @@ check_a([p|Cs], V, D) :-
 check_a([x|Cs], V, D) :-
     !, check_x(Cs, V, D).
 check_a([C|Cs], V, D) :-
-    vowel(C), !,
-    V1 is V + 1,
-    check_double_nice(C, Cs, V1, D).
-check_a([C|Cs], V, D) :-
-    check_double_nice(C, Cs, V, D).
+    check_vowel(C, V, V1),
+    check_double(C, Cs, V1, D).
 
 check_c([], V, D) :-
     nice(V, D).
 check_c([d|_], _, _) :- !, fail.
-check_c([c|Cs], V, _) :-
-    !, check_c(Cs, V, true).
 check_c([a|Cs], V, D) :-
     !,
     V1 is V + 1,
     check_a(Cs, V1, D).
+check_c([c|Cs], V, _) :-
+    !, check_c(Cs, V, true).
 check_c([p|Cs], V, D) :-
     !, check_p(Cs, V, D).
 check_c([x|Cs], V, D) :-
     !, check_x(Cs, V, D).
 check_c([C|Cs], V, D) :-
-    vowel(C), !,
-    V1 is V + 1,
-    check_double_nice(C, Cs, V1, D).
-check_c([C|Cs], V, D) :-
-    check_double_nice(C, Cs, V, D).
+    check_vowel(C, V, V1),
+    check_double(C, Cs, V1, D).
 
 check_p([], V, D) :-
     nice(V, D).
 check_p([q|_], _, _) :- !, fail.
-check_p([p|Cs], V, _) :-
-    !, check_p(Cs, V, true).
 check_p([a|Cs], V, D) :-
     !,
     V1 is V + 1,
     check_a(Cs, V1, D).
 check_p([c|Cs], V, D) :-
     !, check_c(Cs, V, D).
+check_p([p|Cs], V, _) :-
+    !, check_p(Cs, V, true).
 check_p([x|Cs], V, D) :-
     !, check_x(Cs, V, D).
 check_p([C|Cs], V, D) :-
-    vowel(C), !,
-    V1 is V + 1,
-    check_double_nice(C, Cs, V1, D).
-check_p([C|Cs], V, D) :-
-    check_double_nice(C, Cs, V, D).
+    check_vowel(C, V, V1),
+    check_double(C, Cs, V1, D).
 
 check_x([], V, D) :-
     nice(V, D).
 check_x([y|_], _, _) :- !, fail.
-check_x([x|Cs], V, _) :-
-    !, check_x(Cs, V, true).
 check_x([a|Cs], V, D) :-
     !,
     V1 is V + 1,
@@ -380,26 +372,32 @@ check_x([c|Cs], V, D) :-
     !, check_c(Cs, V, D).
 check_x([p|Cs], V, D) :-
     !, check_p(Cs, V, D).
+check_x([x|Cs], V, _) :-
+    !, check_x(Cs, V, true).
 check_x([C|Cs], V, D) :-
-    vowel(C), !,
-    V1 is V + 1,
-    check_double_nice(C, Cs, V1, D).
-check_x([C|Cs], V, D) :-
-    check_double_nice(C, Cs, V, D).
+    check_vowel(C, V, V1),
+    check_double(C, Cs, V1, D).
 
-%% (deftest test-nice-string-p ()
-%%   (check
-%%    (nice-string-p "ugknbfddgicrmopn")
-%%    (nice-string-p "aaa")
-%%    (not (nice-string-p "jchzalrnumimnmhp"))
-%%    (not (nice-string-p "haegwjzuvuyypxyu"))
-%%    (not (nice-string-p "dvszwmarrgswjxmb"))))
+%% advent_2015: 81 ?- nice1(ugknbfddgicrmopn).
+%% true 
 
+%% advent_2015: 82 ?- nice1(aaa).
+%% true.
 
+%% advent_2015: 83 ?- nice1(jchzalrnumimnmhp).
+%% false.
 
+%% advent_2015: 84 ?- nice1(haegwjzuvuyypxyu).
+%% false.
 
+%% advent_2015: 85 ?- nice1(dvszwmarrgswjxmb).
+%% false.
 
+%% advent_2015: 86 ?- nice1(aapqpwapzyjnusnr).
+%% false.
 
+%% check_nice1('day5.data', C).
+%% C = 236 
 
 check_nice2(File, Count) :-
     io:read_file(File, Lines),

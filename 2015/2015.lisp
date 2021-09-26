@@ -536,3 +536,81 @@
    (not (nice-string-p* "suerykeptdsutidb")))) ; Check index for Rule 2!
 
 ;; (count-if #'numberp (mapcar #'nice-string-p* (read-file "/home/slytobias/lisp/books/Advent/advent/2015/day5.data"))) => 51
+
+;;;
+;;;    Day 6
+;;;
+(defun set-lights (lights op coords)
+  (destructuring-bind ((x0 y0) (x1 y1)) coords
+    (loop for i from x0 to x1
+          do (loop for j from y0 to y1
+                   do (setf (aref lights i j) (funcall op (aref lights i j)))) )))
+
+(defun turn-on (light)
+  (declare (ignore light))
+  :on)
+
+(defun turn-off (light)
+  (declare (ignore light))
+  :off)
+
+(defun toggle (light)
+  (ecase light
+    (:on :off)
+    (:off :on)))
+
+(defun turn-on-lights (lights coords)
+  (set-lights lights #'turn-on coords))
+
+(defun turn-off-lights (lights coords)
+  (set-lights lights #'turn-off coords))
+
+(defun toggle-lights (lights coords)
+  (set-lights lights #'toggle coords))
+
+(defun onp (light)
+  (eq light :on))
+
+(defun count-lights (lights)
+  (let ((count 0))
+    (destructuring-bind (rows cols) (array-dimensions lights)
+      (loop for i from 0 below rows
+            do (loop for j from 0 below cols
+                     when (onp (aref lights i j))
+                     do (incf count))))
+    count))
+
+(defun make-lights (size)
+  (make-array (list size size) :initial-element :off))
+
+(defun parse-instruction (instruction limit)
+  (let ((fields (split instruction)))
+    (cond ((string= (first fields) "toggle")
+           (cons :toggle (parse-coords (rest fields) limit)))
+          ((string= (first fields) "turn")
+           (cond ((string= (second fields) "on") (cons :turn-on (parse-coords (cddr fields) limit)))
+                 ((string= (second fields) "off") (cons :turn-off (parse-coords (cddr fields) limit)))
+                 (t (error "Bad instruction: ~A" instruction))))
+          (t (error "Bad instruction: ~A" instruction)))) )
+
+(defun parse-coords (coords limit)
+  (destructuring-bind (start through stop) coords
+    (declare (ignore through))
+    (let ((start-fields (split start #\,))
+          (stop-fields (split stop #\,)))
+      (list (mapcar #'(lambda (s) (read-num s :test #'(lambda (n) (<= 0 n (1- limit)))) ) start-fields)
+            (mapcar #'(lambda (s) (read-num s :test #'(lambda (n) (<= 0 n (1- limit)))) ) stop-fields)))) )
+
+(defun execute-instruction (lights instruction)
+  (destructuring-bind (op . coords) instruction
+    (ecase op
+      (:turn-on (turn-on-lights lights coords))
+      (:turn-off (turn-off-lights lights coords))
+      (:toggle (toggle-lights lights coords)))))
+
+(defun light-show (instructions &optional (size 10))
+  (let ((lights (make-lights size)))
+    (dolist (instruction instructions lights)
+      (execute-instruction lights (parse-instruction instruction size)))) )
+
+;; (count-lights (light-show (read-file "/home/slytobias/lisp/books/Advent/advent/2015/day6.data") 1000)) => 543903
